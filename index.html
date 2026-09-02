@@ -1,135 +1,35 @@
-<!doctype html>
-<html lang="pt-PT">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>HOREC A.I. — MVP 0.3</title>
-<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
-<style>
-:root{--p:#6252e8;--dark:#121426;--bg:#f5f5fa;--line:#e8e8f0;--muted:#74778a}
-*{box-sizing:border-box}
-body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;background:var(--bg);color:#17182a}
-.app{display:flex;min-height:100vh}
-.side{width:230px;background:var(--dark);color:white;padding:22px 15px;position:fixed;inset:0 auto 0 0;z-index:4}
-.brand{font-size:22px;font-weight:850;padding:0 10px 28px}.brand b{color:#8b7cff}
-.nav button{width:100%;border:0;background:none;color:#cfd1df;text-align:left;padding:13px;border-radius:10px;margin:3px 0;font-size:14px;cursor:pointer}
-.nav button.active,.nav button:hover{background:var(--p);color:white}
-.main{margin-left:230px;width:calc(100% - 230px);padding:28px;max-width:1500px}
-.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;gap:12px}
-.top h1{margin:0;font-size:28px}.user{background:#fff;border:1px solid var(--line);padding:10px 14px;border-radius:12px}
-.page{display:none}.page.active{display:block}
-.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:15px}
-.card,.panel{background:#fff;border:1px solid var(--line);border-radius:15px;padding:18px;box-shadow:0 3px 15px #14172a0a}
-.label{font-size:12px;color:var(--muted)}.value{font-size:25px;font-weight:800;margin:7px 0}
-.grid{display:grid;grid-template-columns:1.5fr 1fr 1fr;gap:15px;margin-top:15px}.panel h3{margin:0 0 15px}
-.btn{border:0;border-radius:10px;padding:11px 16px;font-weight:750;cursor:pointer}.primary{background:var(--p);color:white}.soft{background:#eeecff;color:#5142c7}
-.upload{border:2px dashed #bcb5ff;background:#faf9ff;border-radius:14px;padding:28px;text-align:center}
-.table{width:100%;border-collapse:collapse}.table th,.table td{padding:11px 7px;border-bottom:1px solid #eee;text-align:left;font-size:13px}
-.modal{position:fixed;inset:0;background:#0008;display:none;align-items:center;justify-content:center;padding:15px;z-index:8}.modal.show{display:flex}
-.box{background:#fff;border-radius:18px;padding:22px;width:min(850px,100%);max-height:92vh;overflow:auto}
-.steps{display:flex;gap:8px;margin-bottom:15px}.step{flex:1;padding:8px;background:#eeeef5;border-radius:8px;text-align:center;font-size:12px}.step.on{background:#e9e6ff;color:#5142c7;font-weight:700}
-.preview{max-width:270px;max-height:340px;display:block;margin:12px auto;border-radius:8px;border:1px solid #ddd}
-.progress{height:9px;background:#e9e9f1;border-radius:9px;overflow:hidden}.progress i{display:block;width:0;height:100%;background:var(--p);transition:width .2s}
-.fields{display:grid;grid-template-columns:1fr 1fr;gap:11px}.field label{display:block;font-size:12px;color:var(--muted);margin-bottom:4px}
-.field input,.field textarea{width:100%;border:1px solid #ddd;border-radius:8px;padding:10px;font:inherit}.field textarea{min-height:150px}
-.notice{padding:11px 13px;background:#fff8df;border:1px solid #f1dfa2;border-radius:9px;font-size:13px}
-.invoice-img{width:55px;height:65px;object-fit:cover;border-radius:6px}.empty{text-align:center;color:#888;padding:35px}
-.toast{position:fixed;right:18px;bottom:18px;background:#15162a;color:white;padding:12px 16px;border-radius:10px;display:none;z-index:9}.toast.show{display:block}
-.search{width:100%;padding:11px;border:1px solid #ddd;border-radius:9px;margin-bottom:12px}
-@media(max-width:900px){
-.side{width:68px;padding:18px 8px}.brand{font-size:0;text-align:center;padding:0 0 25px}.brand:after{content:"H";font-size:25px}
-.nav button{font-size:0;text-align:center;padding:13px 6px}.nav button:before{content:"•";font-size:24px}
-.main{margin-left:68px;width:calc(100% - 68px);padding:14px}.cards{grid-template-columns:1fr 1fr;gap:10px}.grid{grid-template-columns:1fr}.fields{grid-template-columns:1fr}
-.top{align-items:flex-start;flex-direction:column}.top h1{font-size:24px}.user{font-size:13px}.table{display:block;overflow-x:auto;white-space:nowrap}.box{padding:16px}.steps{gap:4px}.step{font-size:10px;padding:7px 3px}
-}
-@media(max-width:480px){.cards{grid-template-columns:1fr 1fr}.card{padding:13px}.value{font-size:21px}.upload{padding:20px}.btn{padding:10px 13px}}
-</style>
-</head>
-<body>
-<div class="app">
-<aside class="side"><div class="brand">HOREC <b>A.I.</b></div><div class="nav">
-<button class="active" onclick="page('dashboard',this)">⌂ Dashboard</button>
-<button onclick="page('faturas',this)">▤ Faturas</button>
-<button onclick="page('fornecedores',this)">♙ Fornecedores</button>
-<button onclick="page('produtos',this)">▦ Produtos</button>
-<button onclick="page('ia',this)">✦ Perguntar à IA</button>
-</div></aside>
-<main class="main">
-<section id="dashboard" class="page active">
-<div class="top"><h1>Dashboard</h1><div class="user">Pastelaria Demo ▾</div></div>
-<div class="cards">
-<div class="card"><div class="label">Faturas guardadas</div><div class="value" id="kpiCount">0</div><div class="label">nesta demonstração</div></div>
-<div class="card"><div class="label">Total processado</div><div class="value" id="kpiTotal">0,00 €</div><div class="label">documentos capturados</div></div>
-<div class="card"><div class="label">Fornecedores</div><div class="value" id="kpiSup">0</div><div class="label">identificados</div></div>
-<div class="card"><div class="label">Último processamento</div><div class="value" id="kpiLast" style="font-size:18px">—</div><div class="label">estado</div></div>
-</div>
-<div class="grid">
-<div class="panel"><h3>Faturas recentes</h3><div id="recent"></div></div>
-<div class="panel"><h3>O que a HOREC A.I. já sabe</h3><p>✓ Fornecedores</p><p>✓ Datas e documentos</p><p>✓ Totais e IVA</p><p>✓ Texto integral da fatura</p><p>✓ Histórico por documento</p></div>
-<div class="panel"><h3>Captura rápida</h3><div class="upload"><div style="font-size:36px">📷</div><p>Fotografa uma fatura<br>e deixa a HOREC A.I. trabalhar.</p><button class="btn primary" onclick="openCapture()">Nova fatura</button></div></div>
-</div>
-</section>
+Dashboard
+Pastelaria Demo ▾
+Faturas guardadas
+0
+documentos
+Total processado
+0,00 €
+compras registadas
+Fornecedores
+0
+identificados
+Estado
+MVP 0.3.1
+PWA preparada
+Faturas recentes
 
-<section id="faturas" class="page">
-<div class="top"><h1>Faturas</h1><button class="btn primary" onclick="openCapture()">+ Nova fatura</button></div>
-<div class="panel"><input class="search" id="search" placeholder="Pesquisar fornecedor, número ou data..." oninput="renderInvoices()"><div id="invoiceTable"></div></div>
-</section>
-
-<section id="fornecedores" class="page">
-<div class="top"><h1>Fornecedores</h1></div><div class="panel" id="supplierTable"></div>
-</section>
-
-<section id="produtos" class="page">
-<div class="top"><h1>Produtos</h1></div>
-<div class="panel"><p class="notice">Nesta versão, a lista de produtos é alimentada a partir do texto OCR. O próximo passo é normalizar artigos, quantidades e preços para comparar fornecedores.</p><div id="productTable" style="margin-top:14px"></div></div>
-</section>
-
-<section id="ia" class="page">
-<div class="top"><h1>Perguntar à IA</h1></div>
-<div class="panel"><p>Pesquisa o histórico por linguagem natural básica:</p><input class="search" id="aiq" placeholder='Ex.: "Makro" ou "agosto"'><button class="btn primary" onclick="aiDemo()">Perguntar</button><div id="aires" style="margin-top:15px"></div></div>
-</section>
-</main></div>
-
-<div class="modal" id="modal"><div class="box">
-<div class="steps"><div id="s1" class="step on">1 · Capturar</div><div id="s2" class="step">2 · Processar</div><div id="s3" class="step">3 · Confirmar</div><div id="s4" class="step">4 · Guardar</div></div>
-<div id="capture"><h2>Nova fatura</h2><p>Escolhe uma fotografia da fatura. No iPhone podes usar diretamente a câmara.</p><input id="file" type="file" accept="image/*" capture="environment" onchange="startOCR(event)"><div id="imgwrap"></div></div>
-<div id="ocr" style="display:none"><h2>A HOREC A.I. está a ler a fatura…</h2><p id="status">A preparar OCR local.</p><div class="progress"><i id="bar"></i></div><p class="label">A imagem é processada localmente nesta demonstração.</p></div>
-<div id="review" style="display:none"><h2>Rever e confirmar</h2><div class="notice">A extração é assistida por OCR. <b>Confirma os campos antes de guardar.</b></div>
-<div class="fields" style="margin-top:12px">
-<div class="field"><label>Fornecedor</label><input id="supplier"></div>
-<div class="field"><label>N.º documento</label><input id="number"></div>
-<div class="field"><label>Data</label><input id="date"></div>
-<div class="field"><label>Total (€)</label><input id="total" inputmode="decimal"></div>
-<div class="field" style="grid-column:1/-1"><label>Texto reconhecido — editável</label><textarea id="ocrtext"></textarea></div>
-</div>
-<p><button class="btn primary" onclick="saveInvoice()">✓ Confirmar e guardar</button> <button class="btn soft" onclick="closeModal()">Cancelar</button></p>
-</div>
-<div id="saved" style="display:none;text-align:center"><div style="font-size:58px">✅</div><h2>Fatura guardada</h2><p>Foi adicionada ao histórico desta demonstração.</p><button class="btn primary" onclick="closeModal();page('faturas',document.querySelectorAll('.nav button')[1])">Ver histórico</button></div>
-</div></div><div id="toast" class="toast"></div>
-
-<script>
-const KEY='horec_ai_03';let db=JSON.parse(localStorage.getItem(KEY)||'[]');let currentImage='';
-const euro=n=>new Intl.NumberFormat('pt-PT',{style:'currency',currency:'EUR'}).format(Number(n)||0);
-function page(id,b){document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));document.getElementById(id).classList.add('active');document.querySelectorAll('.nav button').forEach(x=>x.classList.remove('active'));if(b)b.classList.add('active');render()}
-function openCapture(){document.getElementById('modal').classList.add('show');resetModal()}
-function closeModal(){document.getElementById('modal').classList.remove('show')}
-function resetModal(){['ocr','review','saved'].forEach(x=>document.getElementById(x).style.display='none');document.getElementById('capture').style.display='block';document.getElementById('file').value='';document.getElementById('imgwrap').innerHTML='';setStep(1)}
-function setStep(n){for(let i=1;i<=4;i++)document.getElementById('s'+i).classList.toggle('on',i===n)}
-function startOCR(ev){const f=ev.target.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{currentImage=e.target.result;document.getElementById('imgwrap').innerHTML='<img class="preview" src="'+currentImage+'">';document.getElementById('capture').style.display='none';document.getElementById('ocr').style.display='block';setStep(2);runOCR(currentImage)};r.readAsDataURL(f)}
-async function runOCR(src){try{document.getElementById('status').textContent='A iniciar reconhecimento de texto…';const worker=await Tesseract.createWorker('por+eng',1,{logger:m=>{if(m.status)document.getElementById('status').textContent=m.status;if(typeof m.progress==='number')document.getElementById('bar').style.width=(m.progress*100)+'%'}});const out=await worker.recognize(src);await worker.terminate();fillFromOCR(out.data.text)}catch(e){fillFromOCR('Não foi possível executar o OCR nesta tentativa. Preenche os campos manualmente.')}}
-function fillFromOCR(t){document.getElementById('ocr').style.display='none';document.getElementById('review').style.display='block';setStep(3);document.getElementById('ocrtext').value=t;const lines=t.split(/\n+/).map(x=>x.trim()).filter(Boolean);const supplier=lines.find(x=>/(makro|recheio|lactogal|nobre|pingo\s*doce|continente|auchan|metro|sumol|delta|centralcer)/i.test(x))||lines[0]||'Fornecedor por confirmar';const date=(t.match(/\b(\d{1,2}[\/\-.]\d{1,2}[\/\-.]\d{2,4})\b/)||[])[1]||new Date().toLocaleDateString('pt-PT');const nums=[...t.matchAll(/(?:total|a pagar|líquido|valor)\D{0,15}(\d{1,6}[.,]\d{2})/ig)].map(m=>m[1]);const total=nums.length?nums[nums.length-1].replace(/\./g,'').replace(',','.'):((t.match(/\b\d{1,6}[.,]\d{2}\b/g)||[]).slice(-1)[0]||'');const no=(t.match(/\b(?:FT|FR|Fatura|Factura)\s*[A-Z0-9\/\-.]+/i)||[])[0]||'';document.getElementById('supplier').value=supplier;document.getElementById('date').value=date;document.getElementById('total').value=total;document.getElementById('number').value=no}
-function saveInvoice(){const total=parseFloat((val('total')||'0').replace(/\s/g,'').replace(/\./g,'').replace(',','.'))||0;const inv={id:Date.now(),image:currentImage,supplier:val('supplier'),number:val('number'),date:val('date'),total,text:val('ocrtext')};db.unshift(inv);localStorage.setItem(KEY,JSON.stringify(db));document.getElementById('review').style.display='none';document.getElementById('saved').style.display='block';setStep(4);toast('Fatura guardada no histórico');render()}
-function val(id){return document.getElementById(id).value.trim()}
-function render(){const total=db.reduce((a,x)=>a+(Number(x.total)||0),0);document.getElementById('kpiCount').textContent=db.length;document.getElementById('kpiTotal').textContent=euro(total);document.getElementById('kpiSup').textContent=new Set(db.map(x=>(x.supplier||'').toLowerCase()).filter(Boolean)).size;document.getElementById('kpiLast').textContent=db.length?'Guardada ✓':'—';renderRecent();renderInvoices();renderSuppliers();renderProducts()}
-function renderRecent(){const el=document.getElementById('recent');if(!db.length){el.innerHTML='<div class="empty">Ainda não existem faturas.<br>Faz a primeira captura.</div>';return}el.innerHTML='<table class="table"><tr><th>Data</th><th>Fornecedor</th><th>Total</th></tr>'+db.slice(0,6).map(x=>'<tr><td>'+esc(x.date)+'</td><td>'+esc(x.supplier)+'</td><td>'+euro(x.total)+'</td></tr>').join('')+'</table>'}
-function renderInvoices(){const q=(document.getElementById('search')?.value||'').toLowerCase();const arr=db.filter(x=>(x.supplier+' '+x.number+' '+x.date).toLowerCase().includes(q));const el=document.getElementById('invoiceTable');if(!arr.length){el.innerHTML='<div class="empty">Nenhuma fatura encontrada.</div>';return}el.innerHTML='<table class="table"><tr><th>Imagem</th><th>Data</th><th>Fornecedor</th><th>N.º</th><th>Total</th><th></th></tr>'+arr.map(x=>'<tr><td><img class="invoice-img" src="'+x.image+'"></td><td>'+esc(x.date)+'</td><td>'+esc(x.supplier)+'</td><td>'+esc(x.number)+'</td><td>'+euro(x.total)+'</td><td><button class="btn soft" onclick="viewInvoice('+x.id+')">Ver</button></td></tr>').join('')+'</table>'}
-function renderSuppliers(){const m={};db.forEach(x=>{const k=x.supplier||'Por confirmar';if(!m[k])m[k]={n:0,t:0};m[k].n++;m[k].t+=Number(x.total)||0});const el=document.getElementById('supplierTable');el.innerHTML=Object.keys(m).length?'<table class="table"><tr><th>Fornecedor</th><th>Faturas</th><th>Total</th></tr>'+Object.entries(m).map(([k,v])=>'<tr><td>'+esc(k)+'</td><td>'+v.n+'</td><td>'+euro(v.t)+'</td></tr>').join('')+'</table>':'<div class="empty">Os fornecedores aparecerão automaticamente.</div>'}
-function renderProducts(){const el=document.getElementById('productTable');const rows=[];db.forEach(x=>String(x.text||'').split(/\n+/).forEach(l=>{if(/\d+[.,]\d{2}/.test(l)&&l.length>8)rows.push(l)}));el.innerHTML=rows.length?'<table class="table"><tr><th>Linhas reconhecidas nas faturas</th></tr>'+rows.slice(0,30).map(x=>'<tr><td>'+esc(x)+'</td></tr>').join('')+'</table>':'<div class="empty">As linhas de produtos reconhecidas aparecerão aqui.</div>'}
-function viewInvoice(id){const x=db.find(y=>y.id===id);if(!x)return;currentImage=x.image;document.getElementById('modal').classList.add('show');document.getElementById('capture').style.display='none';document.getElementById('ocr').style.display='none';document.getElementById('review').style.display='block';document.getElementById('supplier').value=x.supplier||'';document.getElementById('number').value=x.number||'';document.getElementById('date').value=x.date||'';document.getElementById('total').value=Number(x.total||0).toLocaleString('pt-PT',{minimumFractionDigits:2});document.getElementById('ocrtext').value=x.text||'';setStep(3)}
-function aiDemo(){const q=(document.getElementById('aiq').value||'').toLowerCase().trim();const arr=db.filter(x=>(x.supplier+' '+x.number+' '+x.date+' '+x.text).toLowerCase().includes(q));const sum=arr.reduce((a,x)=>a+(Number(x.total)||0),0);document.getElementById('aires').innerHTML='<div class="panel" style="background:#f8f7ff"><b>Resultado</b><p>Encontrei <b>'+arr.length+'</b> fatura(s)'+(q?' relacionadas com "'+esc(q)+'"':'')+', num total de <b>'+euro(sum)+'</b>.</p></div>'}
-function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
-function toast(t){const e=document.getElementById('toast');e.textContent=t;e.classList.add('show');setTimeout(()=>e.classList.remove('show'),2200)}
-render();
-</script>
-</body>
-</html>
+HOREC A.I.
+✓ Captura por câmara
+✓ Upload de imagem
+✓ OCR
+✓ Confirmação manual
+✓ Histórico e fornecedores
+✓ Download da fatura
+Captura rápida
+🧾
+Fotografa ou escolhe uma fatura.
++ Nova fatura
+⌂
+Início
+🧾
+Faturas
+📦
+Produtos
+✦
+IA
