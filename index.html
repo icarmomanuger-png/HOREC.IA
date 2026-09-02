@@ -50,7 +50,57 @@ function reviewData(t){document.getElementById("processing").style.display="none
 function save(){let raw=val("total").replace(/\s/g,"").replace(/\./g,"").replace(",",".");let total=parseFloat(raw)||0;let inv={id:editId||Date.now(),image:imageData,supplier:val("supplier"),number:val("number"),date:val("date"),total,text:val("text")};if(editId)db=db.map(x=>x.id===editId?inv:x);else db.unshift(inv);localStorage.setItem(KEY,JSON.stringify(db));document.getElementById("review").style.display="none";document.getElementById("saved").style.display="block";setStep(4);toast(editId?"Fatura atualizada":"Fatura guardada");editId=null;render()}
 function render(){let total=db.reduce((a,x)=>a+(Number(x.total)||0),0);document.getElementById("kCount").textContent=db.length;document.getElementById("kTotal").textContent=eur(total);document.getElementById("kSup").textContent=new Set(db.map(x=>(x.supplier||"").toLowerCase()).filter(Boolean)).size;document.getElementById("recent").innerHTML=db.length?'<table class="table"><tr><th>Data</th><th>Fornecedor</th><th>Total</th></tr>'+db.slice(0,6).map(x=>'<tr><td>'+esc(x.date)+'</td><td>'+esc(x.supplier)+'</td><td>'+eur(x.total)+'</td></tr>').join("")+"</table>":'<div class="empty">Ainda não existem faturas.</div>';let q=(document.getElementById("search")?.value||"").toLowerCase(),arr=db.filter(x=>(x.supplier+" "+x.number+" "+x.date).toLowerCase().includes(q));document.getElementById("invoiceList").innerHTML=arr.length?'<table class="table"><tr><th>Documento</th><th>Data</th><th>Fornecedor</th><th>N.º</th><th>Total</th><th>Ações</th></tr>'+arr.map(x=>'<tr><td><img class="invoice-img" src="'+x.image+'"></td><td>'+esc(x.date)+'</td><td>'+esc(x.supplier)+'</td><td>'+esc(x.number)+'</td><td>'+eur(x.total)+'</td><td><button class="btn soft" onclick="edit('+x.id+')">✏️</button> <button class="btn soft" onclick="download('+x.id+')">⬇️</button> <button class="btn danger" onclick="del('+x.id+')">🗑</button></td></tr>').join("")+"</table>":'<div class="empty">Nenhuma fatura encontrada.</div>';let sm={};db.forEach(x=>{let k=x.supplier||"Por confirmar";sm[k]??={n:0,t:0};sm[k].n++;sm[k].t+=Number(x.total)||0});document.getElementById("suppliers").innerHTML=Object.keys(sm).length?'<table class="table"><tr><th>Fornecedor</th><th>Faturas</th><th>Total</th></tr>'+Object.entries(sm).map(([k,v])=>'<tr><td>'+esc(k)+'</td><td>'+v.n+'</td><td>'+eur(v.t)+'</td></tr>').join("")+"</table>":'<div class="empty">Os fornecedores aparecerão aqui.</div>';let rows=[];db.forEach(x=>String(x.text||"").split(/\n+/).forEach(l=>{if(/\d+[.,]\d{2}/.test(l)&&l.length>7)rows.push([x.supplier,l])}));document.getElementById("products").innerHTML=rows.length?'<table class="table"><tr><th>Fornecedor</th><th>Linha reconhecida</th></tr>'+rows.slice(0,40).map(r=>'<tr><td>'+esc(r[0])+'</td><td>'+esc(r[1])+'</td></tr>').join("")+"</table>":'<div class="empty">Ainda não há linhas de produtos reconhecidas.</div>'}
 function edit(id){let x=db.find(y=>y.id===id);if(!x)return;editId=id;imageData=x.image;document.getElementById("modal").classList.add("show");document.getElementById("capture").style.display="none";document.getElementById("processing").style.display="none";document.getElementById("review").style.display="block";document.getElementById("saved").style.display="none";document.getElementById("reviewTitle").textContent="Editar fatura";["supplier","number","date","text"].forEach(k=>document.getElementById(k).value=x[k]||"");document.getElementById("total").value=Number(x.total||0).toLocaleString("pt-PT",{minimumFractionDigits:2});setStep(3)}
-function download(id){let x=db.find(y=>y.id===id);if(!x||!x.image)return toast("Esta fatura não tem ficheiro disponível");let a=document.createElement("a");a.href=x.image;a.download="HOREC-AI-"+(x.number||id)+".jpg";document.body.appendChild(a);a.click();a.remove();toast("Download iniciado")}
+function download(id){
+  let x=db.find(y=>y.id===id);
+  if(!x)return toast("Fatura não encontrada");
+
+  if(x.image){
+    let a=document.createElement("a");
+    a.href=x.image;
+    a.download="HOREC-AI-"+(x.number||id)+".jpg";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    toast("Fatura descarregada");
+    return;
+  }
+
+  let html=`<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+<meta charset="UTF-8">
+<title>Fatura HOREC A.I.</title>
+<style>
+body{font-family:Arial,sans-serif;padding:30px;color:#222}
+h1{color:#6252e8}
+.info{margin:15px 0;padding:15px;background:#f5f5fa;border-radius:10px}
+img{max-width:100%;margin-top:20px}
+</style>
+</head>
+<body>
+<h1>HOREC A.I. — Fatura</h1>
+<div class="info">
+<b>Fornecedor:</b> ${esc(x.supplier)}<br>
+<b>N.º Fatura:</b> ${esc(x.number)}<br>
+<b>Data:</b> ${esc(x.date)}<br>
+<b>Total:</b> ${eur(x.total)}
+</div>
+<p><b>Texto reconhecido:</b></p>
+<pre>${esc(x.text)}</pre>
+</body>
+</html>`;
+
+  let blob=new Blob([html],{type:"text/html;charset=utf-8"});
+  let url=URL.createObjectURL(blob);
+  let a=document.createElement("a");
+  a.href=url;
+  a.download="HOREC-AI-"+(x.number||id)+".html";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+  toast("Documento descarregado");
+}
 function del(id){if(!confirm("Eliminar esta fatura?"))return;db=db.filter(x=>x.id!==id);localStorage.setItem(KEY,JSON.stringify(db));render();toast("Fatura eliminada")}
 function ask(){let q=val("aiq").toLowerCase(),arr=db.filter(x=>(x.supplier+" "+x.number+" "+x.date+" "+x.text).toLowerCase().includes(q)),sum=arr.reduce((a,x)=>a+(Number(x.total)||0),0);document.getElementById("answer").innerHTML='<div class="panel"><b>Resultado</b><p>Encontrei <b>'+arr.length+'</b> fatura(s) e um total de <b>'+eur(sum)+'</b>.</p></div>'}
 render();if("serviceWorker"in navigator)window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
