@@ -1,1 +1,19 @@
-
+{
+  "name": "HOREC A.I.",
+  "short_name": "HOREC A.I.",
+  "description": "Gestão inteligente de faturas para o canal HORECA.",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#f5f5fa",
+  "theme_color": "#111426",
+  "orientation": "portrait",
+  "lang": "pt-PT",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='110' fill='%236252e8'/%3E%3Ctext x='256' y='315' text-anchor='middle' font-family='Arial' font-size='180' font-weight='bold' fill='white'%3EHA%3C/text%3E%3C/svg%3E",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
